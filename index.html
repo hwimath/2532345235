@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>휘매쓰 연산 챌린지!</title>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        #game {
+            display: none;
+        }
+        #question {
+            font-size: 24px;
+            margin: 20px;
+        }
+        .option {
+            display: block;
+            margin: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .option:hover {
+            background-color: #e0e0e0;
+        }
+        #score {
+            margin: 10px;
+            font-size: 18px;
+        }
+        #lives {
+            margin: 10px;
+            font-size: 18px;
+        }
+        #timerBar {
+            width: 80%;
+            height: 20px;
+            background-color: #ddd;
+            position: relative;
+            margin: 20px auto;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #timer {
+            width: 100%;
+            height: 100%;
+            background-color: #76c7c0;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        #difficultySelection {
+            margin-top: 50px;
+        }
+        .difficultyButton {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #76c7c0;
+            color: #fff;
+        }
+        .difficultyButton:hover {
+            background-color: #5aa7a0;
+        }
+    </style>
+</head>
+<body>
+    <h1>휘매쓰 연산 챌린지!</h1>
+    <div id="difficultySelection">
+        <p>난이도를 선택하세요:</p>
+        <button class="difficultyButton" onclick="startGame('최상')">최상</button>
+        <button class="difficultyButton" onclick="startGame('상')">상</button>
+        <button class="difficultyButton" onclick="startGame('중')">중</button>
+        <button class="difficultyButton" onclick="startGame('하')">하</button>
+    </div>
+    <div id="game">
+        <div id="timerBar">
+            <div id="timer"></div>
+        </div>
+        <div id="score">점수: 0</div>
+        <div id="lives">남은 기회: 3</div>
+        <div id="question"></div>
+        <div id="options">
+            <div class="option" onclick="selectOption(0)">Option 1</div>
+            <div class="option" onclick="selectOption(1)">Option 2</div>
+            <div class="option" onclick="selectOption(2)">Option 3</div>
+            <div class="option" onclick="selectOption(3)">Option 4</div>
+        </div>
+    </div>
+    <script>
+        const questions = [
+            {question: '8x \\times (-6)', answer: '-48x'},
+            {question: '-8 \\times (-2y)', answer: '16y'},
+            {question: '-7a \\times 8', answer: '-56a'},
+            {question: '-7x \\times \\dfrac{1}{2}', answer: '-\\dfrac{7x}{2}'},
+            {question: '\\dfrac{3}{8} \\times (-14y)', answer: '-\\dfrac{21y}{4}'},
+            {question: '12x \\times \\dfrac{8}{2}', answer: '48x'},
+            {question: '\\dfrac{1}{8} \\times 14y', answer: '\\dfrac{7y}{4}'},
+            {question: '0.2 \\times (-8a)', answer: '-1.6a'},
+            {question: '(-2.8a) \\times (-2)', answer: '5.6a'},
+            {question: '-8x \\times 7', answer: '-56x'},
+            {question: '-8(2x - 1)', answer: '-16x + 8'},
+            {question: '6y \\times (-2)', answer: '-12y'},
+            {question: '-6x \\times 8', answer: '-48x'},
+            {question: '7x \\times (-6)', answer: '-42x'},
+            {question: '-7 \\times (-y)', answer: '7y'},
+            {question: '(-7 + x) \\times (-8)', answer: '56 - 8x'},
+            {question: '\\dfrac{3}{6} \\times (6 - 9y)', answer: '3 - \\dfrac{9y}{2}'},
+            {question: '\\dfrac{1}{2} \\times (-2x + 7)', answer: '-x + \\dfrac{7}{2}'},
+            {question: '(16x + 8) \\times \\dfrac{1}{7}', answer: '\\dfrac{16x}{7} + \\dfrac{8}{7}'},
+            {question: '2 \\times \\left(\\dfrac{1}{2} - 6x\\right)', answer: '1 - 12x'},
+            {question: '0.2 \\times (8 + 10y)', answer: '1.6 + 2y'},
+            {question: '-8 \\times \\left(7x - \\dfrac{2}{8}\\right)', answer: '-56x + 2'},
+            {question: '6 \\times (-2x - 6)', answer: '-12x - 36'},
+            {question: '\\dfrac{12x}{-7}', answer: '-\\dfrac{12x}{7}'},
+            {question: '\\dfrac{14b}{\\dfrac{8}{6}}', answer: '\\dfrac{21b}{2}'},
+            {question: '\\dfrac{\\dfrac{2}{8}a}{\\dfrac{2}{18}}', answer: '\\dfrac{9a}{4}'},
+            {question: '\\dfrac{8x}{\\dfrac{1}{3}}', answer: '24x'},
+            {question: '\\dfrac{\\dfrac{1}{12}a}{-6}', answer: '-\\dfrac{a}{72}'},
+            {question: '\\dfrac{\\dfrac{3}{7}a}{\\dfrac{6}{2}}', answer: '\\dfrac{a}{7}'},
+            {question: '\\dfrac{\\dfrac{2}{8}a}{-\\dfrac{1}{10}}', answer: '-\\dfrac{5a}{2}'},
+            {question: '\\dfrac{-8y}{-\\dfrac{1}{2}}', answer: '16y'},
+            {question: '\\dfrac{-18y}{6}', answer: '-3y'},
+            {question: '\\dfrac{-18x}{-8}', answer: '\\dfrac{9x}{4}'},
+            {question: '\\dfrac{\\dfrac{1}{7}x}{-\\dfrac{8}{6}}', answer: '-\\dfrac{3x}{28}'},
+            {question: '\\dfrac{18x}{-9}', answer: '-2x'},
+            {question: '\\dfrac{-6y}{6}', answer: '-y'},
+            {question: '\\dfrac{-8a}{6}', answer: '-\\dfrac{4a}{3}'},
+            {question: '\\dfrac{-8b}{-2}', answer: '4b'},
+            {question: '\\dfrac{8x - 27}{8}', answer: 'x - \\dfrac{27}{8}'},
+            {question: '\\dfrac{-8x + 12}{7}', answer: '-\\dfrac{8x}{7} + \\dfrac{12}{7}'},
+            {question: '7x + 3y - 5x + 2y', answer: '2x + 5y'},
+            {question: 'x + x^2 - 8y - 6y', answer: 'x^2 + x - 14y'},
+            {question: 'x^2 + \\dfrac{1}{3}y + x - y', answer: 'x^2 + x - \\dfrac{2y}{3}'},
+            {question: 'x - 2y + 1 - \\dfrac{2}{3}x + y', answer: '\\dfrac{x}{3} - y + 1'},
+            {question: '\\dfrac{2}{8}a + 6b - a - \\dfrac{1}{b} + 8', answer: '-\\dfrac{3a}{4} + 6b - \\dfrac{1}{b} + 8'},
+            {question: '2a + 6 + 6a - 7', answer: '8a - 1'},
+            {question: 'x + 8 - 6x + 8', answer: '-5x + 16'},
+            {question: '\\dfrac{1}{6}b + 8 - b + 8', answer: '-\\dfrac{5b}{6} + 16'},
+            {question: '8y - 6 + \\dfrac{1}{6}y - 8', answer: '\\dfrac{49y}{6} - 14'},
+            {question: '7x + \\dfrac{9}{x} - 2x + 3', answer: '5x + \\dfrac{9}{x} + 3'},
+            {question: '4xy + 5x - 3y', answer: '4xy + 5x - 3y'},
+            {question: '\\dfrac{8}{x+1} + \\dfrac{4}{x-1}', answer: '\\dfrac{12x - 4}{x^2 - 1}'},
+            {question: '(2x - 5)(x + 3)', answer: '2x^2 + x - 15'},
+            {question: '2x(3x + 4)', answer: '6x^2 + 8x'},
+            {question: '7x - 5(2x + 3)', answer: '-3x - 15'},
+            {question: '(3x + 2)^2', answer: '9x^2 + 12x + 4'},
+            {question: '(5a - 3)(2a + 4)', answer: '10a^2 + 14a - 12'},
+            {question: '(x + 5)(x - 5)', answer: 'x^2 - 25'},
+            {question: '(2a + 3)^2', answer: '4a^2 + 12a + 9'},
+            {question: '(4x + 5y)(x - y)', answer: '4x^2 + x y - 5 y^2'},
+            {question: '(a + 2b)^2', answer: 'a^2 + 4ab + 4b^2'},
+            {question: '(x + 4)(x - 6)', answer: 'x^2 - 2x - 24'},
+            {question: '(x - 7)^2', answer: 'x^2 - 14x + 49'},
+            {question: '(3a - 2)(a + 5)', answer: '3a^2 + 13a - 10'},
+            {question: '(x^2 - 4)(x + 3)', answer: 'x^3 + 3x^2 - 4x - 12'},
+            {question: '(x - 2)^2', answer: 'x^2 - 4x + 4'},
+            {question: '(-2y + 1) + (-y + 6)', answer: '-3y + 7'},
+            {question: '(7b - 6) + (-8b + 8)', answer: '-b + 2'},
+            {question: '(-2x + 8) + (8x - 6)', answer: '6x + 2'},
+            {question: '-6(x - 1) + 2(2 - x)', answer: '-8x + 8'},
+            {question: '-2x + 8 - 8(6 - 7x) - 7', answer: '54x - 47'},
+            {question: '11x - (6x + 7)', answer: '5x - 7'},
+            {question: '(2x - 6) - (8x - 7)', answer: '-6x + 1'},
+            {question: '2(8x + 1) - 3(x - 6)', answer: '13x + 20'},
+            {question: '6(2x - 1) + (8x + 1)', answer: '20x - 5'},
+            {question: '-6x + 8 - 7x + 1', answer: '-13x + 9'}
+        ];
+        let totalQuestions = questions.length;
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let lives = 3;
+        let timeLimit = 0;
+        let timer;
+        let timerWidth = 100;
+        let difficulty = '';
+        let gameTime = 0;
+        let pointsPerQuestion = 0;
+        let currentCorrectOption = 0;
+        let timerInterval;
+
+        function startGame(selectedDifficulty) {
+            difficulty = selectedDifficulty;
+            document.getElementById('difficultySelection').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            switch (difficulty) {
+                case '최상':
+                    timeLimit = 20;
+                    pointsPerQuestion = 20;
+                    break;
+                case '상':
+                    timeLimit = 30;
+                    pointsPerQuestion = 15;
+                    break;
+                case '중':
+                    timeLimit = 40;
+                    pointsPerQuestion = 13;
+                    break;
+                case '하':
+                    timeLimit = null;
+                    pointsPerQuestion = 10;
+                    break;
+            }
+            displayQuestion();
+            if (timeLimit !== null) {
+                startTimer();
+            }
+            setInterval(function() {
+                gameTime++;
+            }, 1000);
+        }
+
+        function displayQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                generateRandomQuestion();
+            }
+            const questionObj = questions[currentQuestionIndex];
+            document.getElementById('question').innerHTML = '\\(' + questionObj.question + ' = ?\\)';
+            const correctAnswer = questionObj.answer;
+            const options = generateOptions(correctAnswer, questionObj.question);
+            for (let i = 0; i < 4; i++) {
+                document.getElementsByClassName('option')[i].innerHTML = '\\(' + options[i] + '\\)';
+            }
+            currentCorrectOption = options.indexOf(correctAnswer);
+            MathJax.typeset();
+        }
+
+        function generateOptions(correctAnswer, question) {
+            let options = [correctAnswer];
+            while (options.length < 4) {
+                let wrongAnswer = createSimilarAnswer(correctAnswer, question);
+                if (!options.includes(wrongAnswer)) {
+                    options.push(wrongAnswer);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+            return options;
+        }
+
+        function createSimilarAnswer(correctAnswer, question) {
+            // Generate plausible incorrect answers by introducing common mistakes
+            let wrongAnswer = correctAnswer;
+
+            // Simple mistakes: sign errors, calculation errors, coefficient errors
+            if (Math.random() < 0.5) {
+                // Sign error
+                if (wrongAnswer.includes('-')) {
+                    wrongAnswer = wrongAnswer.replace('-', '');
+                } else {
+                    wrongAnswer = '-' + wrongAnswer;
+                }
+            } else {
+                // Slightly change the coefficient
+                wrongAnswer = wrongAnswer.replace(/(\d+)/, function(match) {
+                    let num = parseInt(match);
+                    let delta = Math.floor(Math.random() * 3) + 1; // Change by 1 to 3
+                    if (Math.random() < 0.5) {
+                        num += delta;
+                    } else {
+                        num -= delta;
+                    }
+                    return num;
+                });
+            }
+
+            // For expressions, rearrange terms or make small mistakes
+            if (wrongAnswer === correctAnswer) {
+                wrongAnswer += ' + 1';
+            }
+
+            return wrongAnswer;
+        }
+
+        function selectOption(selectedOptionIndex) {
+            if (timeLimit !== null) {
+                clearInterval(timerInterval);
+            }
+            if (selectedOptionIndex === currentCorrectOption) {
+                score += pointsPerQuestion;
+            } else {
+                lives--;
+                alert('틀렸습니다. 정답은 ' + questions[currentQuestionIndex].answer);
+            }
+            updateScoreAndLives();
+            if (lives <= 0) {
+                alert('게임 오버! 최종 점수: ' + score + ', 총 게임 시간: ' + gameTime + '초');
+                location.reload();
+            } else {
+                currentQuestionIndex++;
+                if (timeLimit !== null) {
+                    timeLimit *= 0.99;
+                }
+                timerWidth = 100;
+                displayQuestion();
+                if (timeLimit !== null) {
+                    startTimer();
+                }
+            }
+        }
+
+        function updateScoreAndLives() {
+            document.getElementById('score').innerHTML = '점수: ' + score;
+            document.getElementById('lives').innerHTML = '남은 기회: ' + lives;
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            let timeRemaining = timeLimit;
+            timerWidth = 100;
+            timerInterval = setInterval(function() {
+                timeRemaining -= 0.1;
+                timerWidth -= (0.1 / timeLimit) * 100;
+                document.getElementById('timer').style.width = timerWidth + '%';
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    lives--;
+                    alert('시간 초과! 정답은 ' + questions[currentQuestionIndex].answer);
+                    updateScoreAndLives();
+                    if (lives <= 0) {
+                        alert('게임 오버! 최종 점수: ' + score + ', 총 게임 시간: ' + gameTime + '초');
+                        location.reload();
+                    } else {
+                        currentQuestionIndex++;
+                        if (timeLimit !== null) {
+                            timeLimit *= 0.99;
+                        }
+                        timerWidth = 100;
+                        displayQuestion();
+                        startTimer();
+                    }
+                }
+            }, 100);
+        }
+
+        function generateRandomQuestion() {
+            const randomIndex = Math.floor(Math.random() * questions.length);
+            questions.push(questions[randomIndex]);
+        }
+
+    </script>
+</body>
+</html>
